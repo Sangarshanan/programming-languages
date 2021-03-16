@@ -60,15 +60,16 @@ x maps to. That is very useful if you are using x.
 
 You can have another binding later, say `val x = 19;` but that just creates a different environment where the later binding for x shadows the earlier one. This distinction will be extremely important when we define functions that use variables
 
-An example in python 
-
 ```python
+# Issues with Shadowing 
 value = 'henlo' # global
 def print_value(name):
     print(value) # local
 print_value('jar jar')
 
-# instead of raising an exception Python uses the global mapping for name because it can’t find one locally, and therefore we might be unaware of our mistake. It is for this reason that people suggest avoiding shadowing.
+# instead of raising an exception Python uses the global mapping for name
+# because it can’t find one locally, and therefore we might be unaware of our mistake.
+# It is for this reason that people suggest avoiding shadowing.
 ```
 
 No to multiple `use` statements in SML because of shadowing remnants of bindings may linger and cause issues
