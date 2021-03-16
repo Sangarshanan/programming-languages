@@ -4,5 +4,6 @@ To be honest I don't really think he is gross he is actually very sweet
 
 Material 
 
-- https://courses.cs.washington.edu/courses/cse341/16sp/#lectures 
+- https://courses.cs.washington.edu/courses/cse341/16sp/#lectures
+- https://courses.cs.washington.edu/courses/cse341/19sp/#homeworks
 - https://www.coursera.org/learn/programming-languages

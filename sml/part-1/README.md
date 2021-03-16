@@ -2,8 +2,11 @@
 
 Was able to install it with `sudo apt-get install smlnj`
 
+Run with `use "sml/part-1/shadowing.sml";;`
 
 Unit 1 Notes: https://courses.cs.washington.edu/courses/cse341/16sp/unit1notes.pdf
+
+Homework: https://courses.cs.washington.edu/courses/cse341/19sp/hw1.pdf
 
 ### Variable Bindings
 
@@ -44,6 +47,31 @@ if e1 then e2 else e3;
 of evaluating e2 under the current dynamic environment is the overall result. If the result is
 false, the result of evaluating e3 under the current dynamic environment is the overall result
 
+
+### Shadowing
+
+https://stochastic.life/2020/02/19/shadowing-vs-mutability/
+
+**Bindings are immutable.**
+
+Given `val x = 8+9;` we produce a dynamic environment where x maps to 17. In
+this environment, x will always map to 17; there is no **assignment statement** in ML for changing what
+x maps to. That is very useful if you are using x. 
+
+You can have another binding later, say `val x = 19;` but that just creates a different environment where the later binding for x shadows the earlier one. This distinction will be extremely important when we define functions that use variables
+
+An example in python 
+
+```python
+value = 'henlo' # global
+def print_value(name):
+    print(value) # local
+print_value('jar jar')
+
+# instead of raising an exception Python uses the global mapping for name because it can’t find one locally, and therefore we might be unaware of our mistake. It is for this reason that people suggest avoiding shadowing.
+```
+
+No to multiple `use` statements in SML because of shadowing remnants of bindings may linger and cause issues
 
 
 
