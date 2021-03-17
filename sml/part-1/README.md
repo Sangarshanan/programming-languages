@@ -50,15 +50,29 @@ false, the result of evaluating e3 under the current dynamic environment is the 
 
 ### Shadowing
 
-https://stochastic.life/2020/02/19/shadowing-vs-mutability/
+https://en.wikipedia.org/wiki/Variable_shadowing
 
 **Bindings are immutable.**
 
 Given `val x = 8+9;` we produce a dynamic environment where x maps to 17. In
 this environment, x will always map to 17; there is no **assignment statement** in ML for changing what
-x maps to. That is very useful if you are using x. 
+x maps to. That is very useful if you are using x.
 
 You can have another binding later, say `val x = 19;` but that just creates a different environment where the later binding for x shadows the earlier one. This distinction will be extremely important when we define functions that use variables
+
+```sml
+val a = 10
+val b = 2
+val b = a * 2
+val a = 5;= = =
+
+val a = <hidden-value> : int
+val b = <hidden-value> : int
+val b = 20 : int
+val a = 5 : int
+```
+
+Shadowed variables are just shown as `hidden-value` cause they have a newer reference and the old ref don't matter anymore, even tho they exist we cannot use them anymore
 
 ```python
 # Issues with Shadowing 
@@ -74,7 +88,74 @@ print_value('jar jar')
 
 No to multiple `use` statements in SML because of shadowing remnants of bindings may linger and cause issues
 
+### Function Bindings 
 
+- Syntax for now is just `fun x0 (x1 : t1, ..., xn : tn) = e`
+- Evaluation: a function is just a value. It can be called later.
+- Type-checking: x0 gets the type t1 * ... * tn -> t. Type-checker checks the expression e, taking into account x1, ... xn and any environment variables, and then produces (by itself!) a type t. This is done with **Type Checking**.
 
+### Tuples / Pairs
+
+- Tuples have a fixed number of pieces that may have different types.
+- Syntax: (e1,e2).
+- Evaluation: Evaluate both e1 and e2, the result is (v1,v2).
+- Type checking: the product type.
+
+Accessing a pair: #1 pr or #2 pr.
+
+```sml
+fun sort_pair(pr : int * int) =
+    if (#1 pr) < (#2 pr)
+    then pr
+    else (#2 pr, #1 pr);
+```
+
+### Lists 
+
+- Lists can be arbitrary size but of elements of the same type.
+- We can add one value to the beginning of a list using cons i.e the notation `::`
+
+```sml
+- val x = [1,2,4];
+val x = [1,2,4] : int list
+- val y = 5::x;
+val y = [5,1,2,4] : int list
+- 6::7::8::y;
+val it = [6,7,8,5,1,2,4] : int list
+- [10] :: [[1,2],[3]];
+val it = [[10],[1,2],[3]] : int list list 
+```
+
+- `null x` returns `True` is `val x = []`
+- `hd [1,2]` returns the head/ first element `1`
+- ` tl [1,2,3,4]` returns `[2,3,4]` here the tail of a list is a list containing all the elements of the original list except the list's first element or head so `tl [9]` returns `[]`
+
+```sml
+(* Access 3rd element in the list *)
+val x = [5,4,6,2]
+val third= hd (tl (tl x));
+```
+
+Every list has the `Type` followed by `List` so it can be an `int List` for list of integers and `(int * int) list` for a list of integer tuples but when we print an empty list we get 
+
+```
+- [];
+val it = [] : 'a list
+```
+
+THis `'a list` can be pronounced alpha list and can type check to anything, so we can use `cons` to add a bool, an integer, another list, a tuple and so on
+```sml
+- [1,2]::[];
+val it = [[1,2]] : int list list
+
+```
+
+The functions `hd` `tl` and `null` are typechecked with this alpha list as well
+
+```sml 
+null: 'a list -> bool
+hd: 'a list -> 'a
+tl: 'a list -> a list
+```
 
 
