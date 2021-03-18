@@ -158,4 +158,46 @@ hd: 'a list -> 'a
 tl: 'a list -> a list
 ```
 
+### List functions
+
+List Functions are always **Recursive** cause that is how we iterate through our list
+
+`list_stuff.sml` has some example functions to understand this better
+
+
+### Let Expressions
+
+- Local variables valid only in a function
+
+- Syntax: `let b1 b2 ... bn in e end.` Each `bi` is any binding, `e` is any expression.
+- Evaluation: evaluate each `bi` and use it to evaluate `e`.
+- Type-checking: check types of each `bi` and then check type of `e` in the local environment given by bindings `bi`.
+
+```sml
+fun hello_let (x : int) =
+    let
+	val a = if x > 0 then x else ~10
+	val b = a + x
+    in
+	if a > b then a else b
+    end;
+```
+
+- `let` introduced the concept of scope for us
+
+**They also allow Nested functions**
+
+It can be used to define a function that you can then only use in the scope defined by the let expression.
+
+```sml
+fun countup_from1(x : int) =
+    let fun count (from : int) =
+	    if from = x
+	    then x :: []
+	    else from :: count(from +1);
+    in
+	count(1)
+    end;
+```
+Here count is a private helper function that can use parameters of the main function to make things nicer
 
