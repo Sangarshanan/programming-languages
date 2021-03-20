@@ -1,4 +1,4 @@
-## Standard ML of New Jersey	
+## Standard ML
 
 Was able to install it with `sudo apt-get install smlnj`
 
@@ -189,6 +189,8 @@ fun hello_let (x : int) =
 
 It can be used to define a function that you can then only use in the scope defined by the let expression.
 
+This technique — **define a local function that uses other variables in scope — is a hugely common and convenient thing to do in functional programming. It is a shame that many non-functional languages have little or no support for doing something like it.**
+
 ```sml
 fun countup_from1(x : int) =
     let fun count (from : int) =
@@ -201,3 +203,70 @@ fun countup_from1(x : int) =
 ```
 Here count is a private helper function that can use parameters of the main function to make things nicer
 
+Let allows you to cache variables to avoid making recursive calls repeatedly
+
+```sml
+fun good_max (xs : int list) =
+    if null xs
+    then 0
+    else if null (tl xs)
+    then hd xs
+    else
+        let val tl_ans = good_max(tl xs)
+        in
+            if hd xs > tl_ans
+            then hd xs
+            else tl_ans
+        end
+```
+
+### Options
+
+- Allowing to not return a value, a bit analogous to a list.
+- **Building**: `NONE` or `SOME <expression>`
+- **Accessing:** `isSome` returns a bool based on NONE and `valOf` returns the evaluates expression of `SOME`
+
+```sml 
+fun better_max (xs : int list) =
+    if null xs
+    then NONE
+    else
+        let val tl_ans = better_max(tl xs)
+        in if isSome tl_ans andalso valOf tl_ans > hd xs
+            then tl_ans
+            else SOME (hd xs)
+    end
+```
+
+
+### Boolean Expressions
+
+- And `e1 andalso e2` Or `e1 orelse e2` Not `not e1`
+- Comparison: `=, <>` for not equal, and `>, <, >=, <=`
+
+
+### Benefits of no mutation
+
+With No mutations we avoid a lot of issues like shared references and aliasing. We cannot never inadvertently alter data we didn't indent to. Even tho ML has aliases its **under the hood** and we never have to worry about them and let compiler do it.
+
+No need to use `df.copy()` before every function to make sure you don't accidentally pollute your original df
+
+```sml
+fun sort_pair (pr : int*int) =
+    if (#1 pr) < (#2 pr)
+    then pr
+    else ((#2 pr),(#1 pr))
+```
+In `sort_pair`, we clearly build and return a new pair in the else-branch, but in the then-branch, do we
+return a copy of the pair referred to by pr or do we return an alias, where a caller like:
+
+```sml
+val x = (3,4)
+val y = sort_pair x
+```
+
+Would now have x and y be aliases for the same pair? The answer is you cannot tell — there is no construct in ML that can figure out whether or not x and y are aliases, and no reason to worry that they might be.
+
+If we had mutation, life would be different. Suppose we could say, “change the second part of the pair x is bound to so that it holds 5 instead of 4.” Then we would have to wonder if #2 y would be 4 or 5.
+
+In case you are curious, we would expect that the **code above would create aliasing**: by returning pr, the sort_pair function would return an alias to its argument. That is more efficient than this version, which would create another pair with exactly the same contents
