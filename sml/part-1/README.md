@@ -176,10 +176,10 @@ List Functions are always **Recursive** cause that is how we iterate through our
 ```sml
 fun hello_let (x : int) =
     let
-	val a = if x > 0 then x else ~10
-	val b = a + x
+        val a = if x > 0 then x else ~10
+        val b = a + x
     in
-	if a > b then a else b
+        if a > b then a else b
     end;
 ```
 
