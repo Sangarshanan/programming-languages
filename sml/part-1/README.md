@@ -2,7 +2,7 @@
 
 Was able to install it with `sudo apt-get install smlnj`
 
-Run with `use "sml/part-1/shadowing.sml";;`
+Run with `use "sml/part-1/list_stuff.sml";`
 
 Unit 1 Notes: https://courses.cs.washington.edu/courses/cse341/16sp/unit1notes.pdf
 
