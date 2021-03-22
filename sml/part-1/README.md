@@ -2,7 +2,9 @@
 
 Was able to install it with `sudo apt-get install smlnj`
 
-Run with `use "sml/part-1/list_stuff.sml";`
+REPL with `rlwrap sml`
+
+Run inside REPL `use "sml/part-1/list_stuff.sml";`
 
 Unit 1 Notes: https://courses.cs.washington.edu/courses/cse341/16sp/unit1notes.pdf
 
@@ -270,3 +272,12 @@ Would now have x and y be aliases for the same pair? The answer is you cannot te
 If we had mutation, life would be different. Suppose we could say, “change the second part of the pair x is bound to so that it holds 5 instead of 4.” Then we would have to wonder if #2 y would be 4 or 5.
 
 In case you are curious, we would expect that the **code above would create aliasing**: by returning pr, the sort_pair function would return an alias to its argument. That is more efficient than this version, which would create another pair with exactly the same contents
+
+
+## Lessons
+
+This will be a little subjective
+
+- I realized I haven't been using recursion as effectively as I could have, its quite powerful. I am still not able to effectively actualize problems with recursion and I am hoping that gets better with practice
+- How much Immutability in a language can offer interms of guarantees and understandability. your code naturally becomes  more predictable this way and compiler is a better friend
+- I am starting to hate the default sml repl 
