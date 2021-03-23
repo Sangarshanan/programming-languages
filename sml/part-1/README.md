@@ -1,4 +1,4 @@
-## Standard ML
+## Standard ML Part 1
 
 Was able to install it with `sudo apt-get install smlnj`
 
@@ -21,7 +21,7 @@ There are several kinds of bindings, but for now let’s consider only a variabl
 syntax
 
 ```sml
-val x = e; 
+val x = e;
 ```
 
 Here, **val is a keyword, x can be any variable, and e can be any expression.** We will learn many ways to
@@ -89,6 +89,16 @@ print_value('jar jar')
 ```
 
 No to multiple `use` statements in SML because of shadowing remnants of bindings may linger and cause issues
+
+
+#### THERE ARE NO ASSIGNMENTS IN SML
+
+so you literally cannot do something like 
+
+``sml 
+val a = 10
+a = a + 1
+```
 
 ### Function Bindings 
 
