@@ -33,3 +33,9 @@ val test_oldest = oldest([(2020,2,28),(2012,2,10),(2019,4,28)]) = SOME (2012,2,1
 val test_cumulative_sum_1 = cumulative_sum [12,27,13] = [12,39,52]
 val test_cumulative_sum_1 = cumulative_sum [1,1,1,1,1] = [1,2,3,4,5]
 
+val reasonalbe_date_test = [
+	reasonable_date (1900,2,29) = false,
+	reasonable_date (1904,2,29) = true
+]
+
+

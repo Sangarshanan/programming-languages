@@ -81,7 +81,7 @@ fun dates_in_months (dates : (int*int*int) list, months : int list) =
     dates_in_month(dates, hd months) @ dates_in_months(dates, tl months);
 
 
-fun get_nth(list_of_string: string list, n: int) =
+fun get_nth(list_of_string, n: int) =
     (* 
     Write a function get_nth that takes a list of strings and an int n and returns the n
     th element of the list where the head of the list is 1st. 
@@ -233,12 +233,29 @@ fun dates_in_months_challenge (dates,months) =
     dates_in_months (dates, remove_duplicates months)
 
 
-(*
+fun reasonable_date(date: (int*int*int)): bool =
+    (*
+    Challenge Problem: Write a function reasonable_date that takes a date and determines if it
+    describes a real date in the common era. A “real date” has a positive year (year 0 did not exist)
+    month between 1 and 12, and a day appropriate for the month. Solutions should properly handle leap
+    years. Leap years are years that are either divisible by 400 or divisible by 4 but not divisible by 100.
 
-Challenge Problem: Write a function reasonable_date that takes a date and determines if it
-describes a real date in the common era. A “real date” has a positive year (year 0 did not exist), a
-month between 1 and 12, and a day appropriate for the month. Solutions should properly handle leap
-years. Leap years are years that are either divisible by 400 or divisible by 4 but not divisible by 100.
-(Do not worry about days possibly lost in the conversion to the Gregorian calendar in the Late 1500s.)
+        reasonable_date (1900,2,29)
+        reasonable_date (1904,2,29)
+    *)
 
-*)
+    let
+        val year = #1 date
+        val leap_year = year mod 400 = 0 orelse (year mod 4 = 0 andalso year mod 100 <> 0)
+        val month = #2 date
+        val day = #3 date
+        val days_in_months = [31,28,31,30,31,30,31,31,30,31,30,31]
+        val days_in_months_leap = [31,29,31,30,31,30,31,31,30,31,30,31]
+        val days_in_months = if leap_year then days_in_months_leap else days_in_months
+    in
+        (*Negative year Booo*)
+        if year <= 0 then false else
+            (*1 - 12 Months orelse Booo*)
+            if month < 1 orelse month > 12 then false else
+                if day > get_nth(days_in_months,month) then false else true
+    end
