@@ -52,7 +52,7 @@ false, the result of evaluating e3 under the current dynamic environment is the 
 
 ### Shadowing
 
-https://en.wikipedia.org/wiki/Variable_shadowing
+https://en.wikipedia.org/wiki/Variable_shadowing variable shadowing occurs when a variable declared within a certain scope (decision block, method, or inner class) has the same name as a variable declared in an outer scope
 
 **Bindings are immutable.**
 
@@ -63,18 +63,30 @@ x maps to. That is very useful if you are using x.
 You can have another binding later, say `val x = 19;` but that just creates a different environment where the later binding for x shadows the earlier one. This distinction will be extremely important when we define functions that use variables
 
 ```sml
-val a = 10
-val b = 2
-val b = a * 2
-val a = 5;= = =
+val a = 10;
+(* a -> 10 *)
 
-val a = <hidden-value> : int
-val b = <hidden-value> : int
-val b = 20 : int
-val a = 5 : int
+val b = a *2;
+(* a -> 10; b -> 20 *)
+
+val a = 5;
+(* a -> 5; b -> 20 *)
+val c = b;
+(* a -> 5; b -> 20; c -> 20 *)
 ```
 
-Shadowed variables are just shown as `hidden-value` cause they have a newer reference and the old ref don't matter anymore, even tho they exist we cannot use them anymore
+Here `val a = 5` is not a mutable assignment expression but rather an immutable value binding, Redefining a does not replace the existing a but there is a new environment where a is shadowed and given a new value, The variables and functions binding to the old a in the old environment still are tied there
+
+
+```sml
+val a = 5
+fun f x = x + a
+val a = 10
+val b = f 1  (* Returns 6 and not 11 *)
+```
+
+This is a lil confusing so it is not recommended to use shadowing in programs, Even tho is SML its actually much easier to reason about than in languages like Python
+
 
 ```python
 # Issues with Shadowing 
@@ -88,14 +100,11 @@ print_value('jar jar')
 # It is for this reason that people suggest avoiding shadowing.
 ```
 
-No to multiple `use` statements in SML because of shadowing remnants of bindings may linger and cause issues
-
-
 #### THERE ARE NO ASSIGNMENTS IN SML
 
 so you literally cannot do something like 
 
-``sml 
+```sml 
 val a = 10
 a = a + 1
 ```
