@@ -77,6 +77,8 @@ val c = b;
 
 Here `val a = 5` is not a mutable assignment expression but rather an immutable value binding, Redefining a does not replace the existing a but there is a new environment where a is shadowed and given a new value, The variables and functions binding to the old a in the old environment still are tied there
 
+https://stackoverflow.com/questions/54777237/sml-behind-the-scenes-of-immutable-variables
+
 
 ```sml
 val a = 5
@@ -85,7 +87,7 @@ val a = 10
 val b = f 1  (* Returns 6 and not 11 *)
 ```
 
-This is a lil confusing so it is not recommended to use shadowing in programs, Even tho is SML its actually much easier to reason about than in languages like Python
+This is a lil confusing so it is not recommended to use shadowing in programs, Even tho in SML its actually much easier to reason about this than in languages like Python
 
 
 ```python
@@ -243,9 +245,10 @@ fun good_max (xs : int list) =
 
 ### Options
 
-- Allowing to not return a value, a bit analogous to a list.
-- **Building**: `NONE` or `SOME <expression>`
-- **Accessing:** `isSome` returns a bool based on NONE and `valOf` returns the evaluates expression of `SOME`
+Options allow you to not return a value and its usage is a bit analogous to a list.
+
+- **Building**: An option can be defined by `NONE` (empty list) or `SOME <expression>` (one element list)
+- **Accessing:** `isSome` returns a bool based on NONE. `valOf` returns the evaluates expression of `SOME`
 
 ```sml 
 fun better_max (xs : int list) =
@@ -268,7 +271,8 @@ fun better_max (xs : int list) =
 
 ### Benefits of no mutation
 
-With No mutations we avoid a lot of issues like shared references and aliasing. We cannot never inadvertently alter data we didn't indent to. Even tho ML has aliases its **under the hood** and we never have to worry about them and let compiler do it.
+With No mutations we avoid a lot of issues like shared references (one object that two or more items referencing to it) and aliasing (one variable's value is assigned to another variable) Eg:`x=5; y=x` https://stackoverflow.com/questions/32915792/are-alias-and-reference-the-same-thing-in-c
+ We cannot never inadvertently alter data we didn't indent to. Even tho ML has aliases its **under the hood** and we never have to worry about them and let compiler do it.
 
 No need to use `df.copy()` before every function to make sure you don't accidentally pollute your original df
 
@@ -292,6 +296,43 @@ If we had mutation, life would be different. Suppose we could say, “change the
 
 In case you are curious, we would expect that the **code above would create aliasing**: by returning pr, the sort_pair function would return an alias to its argument. That is more efficient than this version, which would create another pair with exactly the same contents
 
+## Java Mutations
+
+Suppose we are maintaining permissions for who is allowed to access something like a file on the disk. It is fine to let everyone see who has permission `public` but clearly only those that do have permission can actually use the resource which is `private`
+
+```java
+class ProtectedResource {
+    private Resource theResource = ...;
+
+    private String[] allowedUsers = ...;
+
+    public String[] getAllowedUsers() {
+        return allowedUsers;
+    }
+
+    public String currentUser() { ... }
+
+    public void useTheResource() {
+        for(int i=0; i < allowedUsers.length; i++) {
+            if(currentUser().equals(allowedUsers[i])) {
+                ... // access allowed: use it
+                return;
+                }
+        }
+    throw new IllegalAccessException();
+    }
+}
+```
+Here `getAllowedUsers` returns an alias to the `allowedUsers` array, so any user can gain access by doing `getAllowedUsers()[0] = currentUser()`. Hackerman !  This would not be possible if we had some sort of array in Java that did not allow its contents to be updated. Instead, in Java we often have to remember to make a copy.
+
+```java
+public String[] getAllowedUsers() {
+    String[] copy = new String[allowedUsers.length];
+    for(int i=0; i < allowedUsers.length; i++)
+        copy[i] = allowedUsers[i];
+    return copy;
+}
+```
 
 ## Lessons
 
@@ -299,4 +340,4 @@ This will be a little subjective
 
 - I realized I haven't been using recursion as effectively as I could have, its quite powerful. I am still not able to effectively actualize problems with recursion and I am hoping that gets better with practice
 - How much Immutability in a language can offer interms of guarantees and understandability. your code naturally becomes  more predictable this way and compiler is a better friend
-- I am starting to hate the default sml repl 
+- I am starting to hate the default sml repl
