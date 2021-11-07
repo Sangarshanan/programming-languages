@@ -70,3 +70,83 @@ Constructor is a function (amongst other things) that makes values of the new ty
 - val c = TwoInts (1+2, 3+4);
 (* val c = TwoInts (3,7) : mytype *)
 ```
+
+Now we know how to build datatype values but we still need to know how to access them. We would want to extract what constructor made the type & also extract the data.
+
+### Case Expressions
+
+```sml
+fun f (x: mytype) =
+    case x of
+        Pizza => 3
+      | Str s => String.size s
+      | TwoInts(i1,i2) => i1 + i2
+```
+
+we can now pass the constructors to the function to Get values of mytype depending on the case
+
+```sml
+- f Pizza;
+(* val it = 3 : int *)
+
+- f (Str "hello");
+(* val it = 5 : int *)
+
+- f (TwoInts(1,2));
+(* val it = 3 : int *)
+```
+
+Case-expression we have Each branch has the form `p => e` where p is a pattern and e is an expression, and we separate the branches with the `|` character. This is like a more powerful if-then-else expression that returns the first branch it matches.
+
+We can also define types that would be synonymous to Enums
+
+```sml
+datatype suit = Club | Diamond | Heart | Spade
+datatype rank = Jack | Queen | King | Ace | Num of int
+```
+
+### Expression Trees
+
+This is a datatype for arithmetic expressions containing constants, negations, additions and multiplications.
+
+```sml
+datatype exp = Constant of int
+               | Negate of exp
+               | Add of exp * exp
+               | Multiply of exp * exp
+```
+
+Thanks to the self-reference, what this data definition really describes is trees where the leaves are integers
+and the internal nodes are either negations with one child, additions with two children or multiplications
+with two children. We can write a function that takes an exp and evaluates it
+
+```sml
+Add (Constant (10 + 9), Negate (Constant 4))
+```
+Picturing the resultant type
+```
+Add |---> Constant ---> 19
+    |---> Negate ---> Constant ---> 4 
+```
+
+Now we can define a function using Case to evaluate our datatype based on the expression and the constructor name given to the operator. With recursive function calls :)
+
+```sml
+fun eval e =
+    case e of
+    Constant i => i
+        | Negate e2 => ~ (eval e2)
+        | Add(e1,e2) => (eval e1) + (eval e2)
+        | Multiply(e1,e2) => (eval e1) * (eval e2)
+```
+
+Suppose we have a complex Expression and we want to find the number of Add operations happening inside it, We can do something like this
+
+```sml
+fun number_of_adds e =
+    case e of
+    Constant i => 0
+        | Negate e2 => number_of_adds e2
+        | Add(e1,e2) => 1 + number_of_adds e1 + number_of_adds e2
+        | Multiply(e1,e2) => number_of_adds e1 + number_of_adds e2
+```
