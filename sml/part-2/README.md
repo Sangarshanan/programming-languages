@@ -30,12 +30,43 @@ val x ={foo=1+2, bar=(true,9)};
 #foo x;
 ```
 
-At an implementation level Tuples are actually kind of Records with a index (1,2..n) as field names. **Tuples are syntactic sugar for Records**
+At an implementation level Tuples are actually kind of Records with a index (1,2..n) as field names.
 
 ```sml
 - val x = {2=2, 1=3};
-val it = (3,2) : int * int
+(* val it = (3,2) : int * int *)
 
 - val x = (3,2);
-val x = (3, 2) : int * int
+(* val x = (3, 2) : int * int *)
+```
+
+Tuples are just **Syntactic Sugar** for Records
+
+### Datatype Bindings
+
+A Strange yet awesome way for us to create `OneOf` types in SML
+
+```sml
+datatype mytype = TwoInts of int*int
+                | Str of string
+                | Pizza
+```
+- Adds a new type `mytype` to the environment
+- Adds **constructors** to the environment. TwoInts, Str & Pizza
+
+Constructor is a function (amongst other things) that makes values of the new type
+
+- TwoInts : int*int -> mytype
+- Str : string -> mytype
+- Pizza : mytype
+
+```sml
+- val a = Str "hi";
+(* val a = Str "hi" : mytype *)
+
+- val b = Pizza;
+(* val b = Pizza : mytype *)
+
+- val c = TwoInts (1+2, 3+4);
+(* val c = TwoInts (3,7) : mytype *)
 ```
