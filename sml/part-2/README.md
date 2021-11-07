@@ -150,3 +150,14 @@ fun number_of_adds e =
         | Add(e1,e2) => 1 + number_of_adds e1 + number_of_adds e2
         | Multiply(e1,e2) => number_of_adds e1 + number_of_adds e2
 ```
+
+### Type Synonyms
+
+As a synonym should be this just creates another name for a type that already exists
+
+```sml
+type aname = t
+(* or a real example *)
+type date = int * int * int
+```
+Here the type `t` and name `aname` are interchangeable in every way
