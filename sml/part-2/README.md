@@ -161,3 +161,37 @@ type aname = t
 type date = int * int * int
 ```
 Here the type `t` and name `aname` are interchangeable in every way
+
+### Lists and Options are Datatypes
+
+Because datatype definitions can be recursive we can use them to create our own types for lists. For example,
+this binding works well for a **Linked List Of Integers**
+
+```sml
+datatype my_int_list = Empty
+                        | Cons of int * my_int_list
+
+val one_two_three = Cons(1,Cons(2,Cons(3,Empty)))
+
+fun append_mylist (xs,ys) =
+    case xs of
+        Empty => ys
+        | Cons(x,xs’) => Cons(x, append_mylist(xs’,ys))
+```
+
+Also as it turns out the "built in" lists and options are just datatypes. As a matter of style, it is better to use the built-in widely-known feature than to reinvent the wheel.
+
+It is better style to use **pattern-matching for accessing list and option values** not the
+functions `null`, `hd`, `tl`, `isSome`, and `valOf` we saw previously
+
+```sml
+fun append (xs,ys) =
+    case xs of
+        [] => ys
+      | x::xs => x :: append(xs,ys)
+
+append([1], [2]);
+(*  val it = [1,2] : int list *)
+```
+
+
