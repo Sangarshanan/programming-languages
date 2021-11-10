@@ -194,4 +194,84 @@ append([1], [2]);
 (*  val it = [1,2] : int list *)
 ```
 
+### Polymorphic Datatypes
+
+We can define datatypes that can be made up of values of any type, as we have seen with `int list`, `int list list`, `(bool * int) list` etc. This can be very useful for building "generic" data structures
+
+This is how Options are defined in SML
+
+```sml
+datatype 'a option = NONE | SOME of 'a
+
+- NONE;
+(* val it = NONE : 'a option *)
+- SOME 10;
+(* val it = SOME 10 : int option *)
+
+```
+
+Such a binding does not introduce a type option. Rather, it makes it so that if t is a type, then t option
+is type.
+
+
+### Pattern-Matching Each-Of Types
+
+So far we have used pattern-matching for one-of types but we can use it for each-of types also
+
+- Tuples can be matched with pattern (x1, ... ,xn)
+- Records can be matched with the pattern {f1=x1, ... ,fn=xn}
+
+```sml
+fun sum_triple (triple : int * int * int) =
+    case triple of
+        (x,y,z) => z + y + x
+
+- sum_triple(1,2,3);
+(* val it = 6 : int *)
+
+fun full_name (r : {first:string,middle:string,last:string}) =
+    case r of
+        {first=x,middle=y,last=z} => x ^ " " ^ y ^ " " ^z
+
+- full_name {first="albert", last="camus", middle="french"};
+(* val it = "albert french camus" : string *)
+```
+
+**A case-expression with one branch is poor style** We will improve our functions using let expressions and the simple fact that you can use patterns in val-bindings too!
+
+
+```sml
+fun full_name r =
+    let val {first=x,middle=y,last=z} = r
+    in
+        x ^ " " ^ y ^ " " ^z
+    end
+
+fun sum_triple triple =
+    let val (x,y,z) = triple
+    in
+        x + y + z
+    end
+```
+
+Actually we can do even better: Just like a pattern can be used in a val-binding to bind variables (e.g., x, y,
+and z) to the various pieces of the expression (e.g., triple), we can use a pattern when defining a function
+binding and the pattern will be used to introduce bindings by matching against the value passed when the
+function is called
+
+```sml
+fun full_name {first=x,middle=y,last=z} =
+    x ^ " " ^ y ^ " " ^z
+
+fun sum_triple (x,y,z) =
+    x + y + z
+```
+
+Here `sum_triple` looks like it takes 3 arguments but rather it just One triple tuple argument how does SML know the difference between both these cases.
+
+**Every function in ML takes exactly one argument!** Every time we write a multi-argument function,
+we are really writing a one-argument function that takes a tuple as an argument and uses pattern-matching
+to extract the pieces. Tis ML not Java
+
+There are no Zero arg functions either. The binding fun f () = e is using the `unit-pattern ()` to match against calls that pass the unit value () which is the only value of type unit. The type unit is just a datatype with only one constructor which takes no arguments and uses the unusual syntax `()`. Basically, `datatype unit = ()` comes pre-defined.
 
