@@ -1,6 +1,7 @@
 ## Standard ML Part 2
 
 - Notes: https://courses.cs.washington.edu/courses/cse341/16sp/unit2notes.pdf
+
 - Homework: https://courses.cs.washington.edu/courses/cse341/19sp/hw2.pdf
 
 This week on DragonBallZ We will be defining our own **compound types** which are powerful combinations of the pairs, lists and options already provided by ML. We will also use **pattern matching** to access the pieces of values built out of compound types.
@@ -274,4 +275,267 @@ we are really writing a one-argument function that takes a tuple as an argument 
 to extract the pieces. Tis ML not Java
 
 There are no Zero arg functions either. The binding fun f () = e is using the `unit-pattern ()` to match against calls that pass the unit value () which is the only value of type unit. The type unit is just a datatype with only one constructor which takes no arguments and uses the unusual syntax `()`. Basically, `datatype unit = ()` comes pre-defined.
+
+### We get Type Inference !
+
+By using patterns to access values of tuples and records rather than `#foo` it's no longer
+necessary to write types on your function arguments. In fact it is conventional in ML to leave them off
+as you can always use the REPL to find out a function's type.
+
+Suppose we write a partial_sum function
+
+```sml
+fun partial_sum (x,y,z) =
+    x + z
+```
+
+We are not using y here but we still expect he Return type for this function to be `int * int * int -> int`
+but if we run this we actually get `int * 'a * int` which means `y` can be of any type.
+
+Which means `partial_sum (3,4,5)` is just as valid as `partial_sum (3,false,5)` making this a **Polymorphic Function**
+
+
+### Nested Patterns
+
+Patterns are recursive: anywhere we have been putting a variable in our patterns we can instead put another pattern
+For example, the pattern `a::(b::(c::d))` would match any list with at least 3 elements and it would bind a to the first element, b to the second, c to the third, and d to the list holding all the other elements (if any). The pattern `a::(b::(c::[]))` on the other hand, would match only lists with exactly three elements.
+
+Zipping a list where `([1,2], [3,4], [5,6])` Returns `([1,3,5], [2,4,6])`
+
+```sml
+exception LengthMismatch
+
+fun bad_zip (l1, l2, l3) = 
+    if null l1 andalso null l2 andalso null l3
+    then []
+    else if null l1 orelse null l2 orelse null l3
+    then raise LengthMismatch
+    else (hd l1, hd l2, hd l3) :: bad_zip(tl l1, tl l2, tl l3)
+```
+
+In the above case we can easily miss cases and are getting no help from the type checker. This can be done in a more clean & efficient way using nested pattern matching. 
+
+
+```sml
+exception BadTriple
+
+fun zip list_triple =
+    case list_triple of
+        ([],[],[]) => []
+        | (hd1::tl1,hd2::tl2,hd3::tl3) => (hd1,hd2,hd3)::zip3(tl1,tl2,tl3)
+        | _ => raise BadTriple
+```
+
+Here `_` is a wildcard matches everything without introducing a binding
+
+Unzip is the opposite of Zip and can also be solved with nested patterns
+
+```sml
+fun unzip lst =
+    case lst of
+        [] => ([],[],[])
+        | (a,b,c)::tl => let val (l1,l2,l3) = unzip3 tl
+                         in
+                            (a::l1,b::l2,c::l3)
+                         end
+```
+
+This is a function that gives you the sign of the result after multiplying two numbers
+
+```sml
+(* Positive, Negative, Zero *)
+datatype sgn = P | N | Z
+
+fun multsign (x1,x2) =
+let fun sign x = if x=0 then Z else if x>0 then P else N
+    in
+        case (sign x1,sign x2) of
+            (Z,_) => Z
+            | (_,Z) => Z
+            | (P,P) => P
+            | (N,N) => P
+            | _ => N (* many say bad style; I am okay with it *)
+    end
+```
+
+When you include a “catch-all” case at the bottom like this, you are giving up any checking that you did not forget any cases: after all, it matches anything the earlier cases did not, so the type-checker will certainly not think you forgot any cases. So you need to be extra careful if using this sort of technique and it is probably less error-prone to enumerate the remaining cases `(in this case (N,P) and (P,N))`). That the type-checker will then still determine that no cases are missing is useful and non-trivial since it has to reason about the use (Z,_) and (_,Z) to figure out that there are no missing possibilities of type sgn * sgn.
+
+- Avoid nested case expressions and replace them with nested patterns to avoid unnecessary branches
+- Match against a tuple of datatypes to compare them
+- Wildcards are a good idea ! when we don't need the data
+
+We can also have nested function which we can use instead of case expressions
+
+```sml
+fun eval (Constant i) = i
+    | eval (Negate e2) = ~ (eval e2)
+    | eval (Add(e1,e2)) = (eval e1) + (eval e2)
+    | eval (Multiply(e1,e2)) = (eval e1) * (eval e2)
+```
+
+### Exceptions
+
+ML has a built-in notion of exceptions which you can define with `exception <name>` and raise (also known as throw)
+
+```sml
+exception UndesirableCondition
+
+fun mydiv (x, y) =
+    if y=0
+    then raise UndesirableCondition
+    else x div y
+```
+
+Exceptions are a lot like constructors of a datatype binding so have types and can be passed to functions
+
+```sml
+fun maxlist (xs,ex) =
+    case xs of
+        [] => raise ex
+      | x::[] => x
+      | x::xs' => Int.max(x,maxlist(xs',ex))
+
+(* val maxlist = fn : int list * exn -> int *)
+(* Here the Function takes exn or Exception as an Argument *)
+
+val x = maxlist([], UndesirableCondition)
+        handle UndesirableCondition => 42
+(* val x = 42 : int *)
+
+val x = maxlist([1,2,3], UndesirableCondition)
+        handle UndesirableCondition => 42
+(* val x = 3 : int *)
+```
+
+We can also define `exception MyOtherException of int * int` and raise `raise MyOtherException(3,9)`
+
+
+```sml
+fun f n =
+    if n=0
+    then raise List.Empty
+    else if n=1
+    then raise (MyException 4)
+    else n * n
+
+val x = (f 1 handle List.Empty => 42) handle MyException n => f n
+(* 16 *)
+```
+
+As with case-expressions, handle-expression can also have multiple branches each with a pattern and expression, syntactically separated by |
+
+### Tail Recursion
+
+Lets break down tail recursion using our Call stack and a simple factorial function
+
+```sml
+fun fact n = if n=0 then 1 else n*fact(n-1)
+val x = fact 3
+```
+
+When this recursion runs our call stack is made up for 4 elements i.e recursive calls that pop out as they execute to return the end result
+
+```math
+fact 3: 3*_     fact 3: 3*_     fact 3: 3*_     fact 3: 3*2  
+fact 2: 2*_     fact 2: 2*_     fact 2: 2*1
+fact 1: 1*_     fact 1: 1*1
+fact 0: 1*_
+```
+
+Now let's define a new version of factorial that is a bit more complicated and break it down
+
+```sml
+fun fact n =
+    let fun aux(n,acc) = 
+        if n=0 
+        then acc 
+        else aux(n-1,acc*n)
+    in
+        aux(n,1)
+    end
+
+val x = fact 3
+```
+
+We now have a helper functions `aux` that takes in an accumulator along with n to return itself when n = 0 else multiple the accumulator with n and decrement n recursively, This is exactly the same as factorial example above
+
+One key difference is that now the **Return function does not do anything extra** cause in the first function we do `n * fact(n-1)` so the return function fact(n-1) needs to be multiplied with n but in our accumulator example the return function `aux(n-1, acc*n)` does not have any additional operation with it
+
+Let's us take a look at the call stack here
+
+```math
+fact 3:_    fact 3:_
+aux(3,1)    aux(3,1): _
+            aux(2,3): 6
+            aux(1,6): 6
+            aux(0,6): 6
+```
+
+**It is unnecessary to keep around a stack frame just so it can return the callee's result without any evaluation**
+
+ML recognizes these functions as **Tail calls** in the compiler and treats them differently: Pop the caller before the call allowing the callee to reuse the same stack space
+
+```math
+No stack space is alloted and recursive functions returned are just replaced
+
+fact 3      aux(3,1)    aux(2,3)    aux(1,6)    aux(0,6)
+```
+
+POV: WHITE GIRL SUMMER  https://www.youtube.com/watch?v=-PX0BV9hGZY
+
+Tail Recursive: Recursive calls are tail calls
+
+There is a common methodology that can guide this transformation
+
+- Create a helper function that takes an **accumulator**
+- Old base case becomes initial accumulator
+- New base case becomes final accumulator
+
+In general converting a non-tail-recursive function to a tail-recursive function usually needs associativity, but many functions are associative.
+
+
+```sml
+fun sum1 xs =
+    case xs of
+    [] => 0
+  | i::xs’ => i + sum1 xs’
+
+
+fun sum2 xs =
+    let fun f (xs,acc) =
+        case xs of
+            [] => acc
+            | i::xs’ => f(xs’,i+acc)
+    in
+        f(xs,0)
+    end
+```
+
+A more interesting example is this inefficient function for reversing a list:
+
+```sml
+fun rev1 lst =
+    case lst of
+        [] => []
+      | x::xs => (rev1 xs) @ [x]
+```
+
+We can recognize immediately that it is not tail-recursive since after the recursive call it remains to append
+the result onto the one-element list that holds the head of the list. Although this is the most natural way
+to reverse a list recursively, the inefficiency is caused by more than **creating a call-stack of depth equal to the argument's length which we will call n**. The worse problem is that the total amount of work performed
+is proportional to n^2 i.e this is a quadratic algorithm. The reason is that appending two lists takes time proportional to the length of the first list
+
+```sml
+fun rev2 lst =
+    let fun aux(lst,acc) =
+        case lst of
+            [] => acc
+            | x::xs => aux(xs, x::acc)
+    in
+        aux(lst,[])
+    end
+```
+
+By using accumulators & tail recursion we do only a constant amount of work for each recursive
+call because `::` does not have to traverse either of its arguments
 

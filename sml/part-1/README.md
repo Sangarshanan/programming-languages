@@ -10,6 +10,8 @@ Unit 1 Notes: https://courses.cs.washington.edu/courses/cse341/16sp/unit1notes.p
 
 Homework: https://courses.cs.washington.edu/courses/cse341/19sp/hw1.pdf
 
+https://www.yld.io/blog/the-not-so-scary-guide-to-functional-programming/
+
 ### Variable Bindings
 
 An ML program is a sequence of bindings. Each binding gets type-checked and then (assuming it type-checks)
@@ -88,6 +90,13 @@ val b = f 1  (* Returns 6 and not 11 *)
 ```
 
 This is a lil confusing so it is not recommended to use shadowing in programs, Even tho in SML its actually much easier to reason about this than in languages like Python
+
+```python
+a = 5
+f = lambda x : x + a
+a = 10
+f(1) # Returns 11
+```
 
 
 ```python
