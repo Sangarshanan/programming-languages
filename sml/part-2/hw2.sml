@@ -173,3 +173,51 @@ fun all_same_color(cards: card list) =
       | first :: second :: rest => if card_color(first) = card_color(second)
                                    then all_same_color(second :: rest)
                                    else false
+
+(*9.
+Write a function sum_cards
+which takes a list of cards and returns the sum of their values.
+*)
+fun sum_cards(cards: card list) =
+   let fun aux(cards, sum) =
+      case cards of
+         [] => sum
+      |  x::xs => aux(xs, sum + card_value(x))
+   in
+      aux(cards, 0)
+   end
+
+(*10.
+Write a function score which takes a card list (the held-cards)
+and an int (the goal) and computes the score as described above
+*)
+fun score (held_cards : card list, goal : int ) =
+   let
+      val sum = sum_cards(held_cards)
+      val preliminary_score = if sum > goal then 3 * (sum - goal) else (goal - sum)
+      val same_color = all_same_color(held_cards)
+    in
+      if same_color then preliminary_score div 2 else preliminary_score
+   end
+
+(*11
+Write a function officiate, which "runs a game." It takes a card list
+(the card-list) a move list (what the player "does" at each point), and an int
+(the goal) and returns the score at the end of the game after processing (some or all of)
+the moves in the move list in order
+*)
+fun officiate (card_list : card list, move_list : move list, goal : int) =
+    let fun play(held_cards : card list, moves : move list, remaining_cards : card list) =
+            case moves of
+                [] => score(held_cards, goal)
+                   | x::x' => case x of
+                                  Discard card => play(remove_card(held_cards, card, IllegalMove), x', remaining_cards)
+                               |  Draw => case remaining_cards of
+                                              [] => score(held_cards, goal)
+                                            | y::y' => let val new_held_cards = y::held_cards in
+                                                           if sum_cards(new_held_cards) > goal then score(new_held_cards, goal)
+                                                           else play(new_held_cards, x', y')
+                                                       end
+    in
+        play([], move_list, card_list)
+    end

@@ -38,7 +38,7 @@ val test7 = remove_card ([(Hearts, Ace)], (Hearts, Ace), IllegalMove) = []
 val test8_1 = all_same_color [(Hearts, Ace), (Hearts, Ace)] = true
 val test8_2 = all_same_color [(Hearts, Ace), (Clubs, Num 2)] = false
 
-(* val test9 = sum_cards [(Clubs, Num 2),(Clubs, Num 2)] = 4
+val test9 = sum_cards [(Clubs, Num 2),(Clubs, Num 2)] = 4
 
 val test10 = score ([(Hearts, Num 2),(Clubs, Num 4)],10) = 4
 
@@ -54,5 +54,3 @@ val test13 = ((officiate([(Clubs,Jack),(Spades,Num(8))],
                          42);
                false) 
               handle IllegalMove => true)
-             
-              *)
