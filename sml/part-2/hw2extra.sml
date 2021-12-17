@@ -2,6 +2,9 @@
 Extra practice problems
 https://classes.engineering.wustl.edu/cse425s/index.php?title=SML_Practice_Problems_B#pass_or_fail
 *)
+
+(* PART *)
+
 type student_id = int
 type grade = int (* must be in 0 to 100 range *)
 type final_grade = { id : student_id, grade : grade option }
@@ -66,3 +69,61 @@ val test_8 = number_misgraded([
     (pass, {grade=SOME 10, id=1}),
     (fail, {grade=SOME 100, id=1})
 ]) = 2
+
+
+(* PART *)
+datatype 'a tree = leaf
+                 | node of { value : 'a, left : 'a tree, right : 'a tree }
+datatype flag = leave_me_alone | prune_me
+
+val tree1 = node {value=5, left=leaf, right=leaf}
+val tree2 = node {
+        value= 10,
+        left= node {
+            value = 5,
+            left=leaf,
+            right=node { value = 7, left=leaf, right=leaf}
+            },
+        right= leaf}
+
+val tree_flag = node {
+        value= 10,
+        left= node {
+            value = 5,
+            left=leaf,
+            right=node { value = prune_me, left=leaf, right=leaf}
+            },
+        right= leaf}
+
+(*
+Write a function tree_height  that accepts an ’a tree and evaluates to a height of this tree. 
+The height of a tree is the length of the longest path to a leaf.
+Thus the height of a leaf is 0.
+*)
+fun tree_height(a) =
+    case a of
+        leaf => 0
+    |   node {value=x,left=left,right=right} => 
+        let 
+            val left_height = tree_height(left)
+            val right_height = tree_height(right)
+        in
+            if left_height > right_height then left_height + 1 else right_height + 1
+        end
+
+val test_9 = tree_height(tree1) = 1
+val test_10 = tree_height(tree2) = 3
+
+(*
+Write a function sum_tree that takes an int tree 
+and evaluates to the sum of all values in the nodes.
+*)
+
+fun sum_tree(a_tree) =
+    case a_tree of
+        leaf => 0
+    |   node {value=x,left=left,right=right} => 
+            x + sum_tree(left) + sum_tree(right)
+
+val test_11 = sum_tree(tree1) = 5
+val test_12 = sum_tree(tree2) = 22
