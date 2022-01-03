@@ -112,7 +112,7 @@ fun triple_n_times (n,x) =
 
 ML has a much more concise way to define functions right where you use them
 
-```
+```sml
 (* Anonymous fn *)
 fun triple_n_times (n,x) = 
     n_times(
@@ -153,7 +153,7 @@ What is `fn y => tl y?` It is a function that returns the list-tail of its argum
 fun nth_tail (n,x) = n_times(tl, n, x)
 ```
 
-### Maps and filters
+### Maps and filters ( Beyonce of Higher order functions )
 
 Let's consider a very useful higher-order function over lists from the **Hall of Fame**
 
@@ -236,13 +236,13 @@ fun true_of_all_constants(f,e) =
 fun all_even e = true_of_all_constants(is_even,e)
 ```
 
-## Lexical Scope
+### Lexical Scope
 
 Lexical scope means that in a nested group of functions the inner functions have access to the variables and other resources of their parent scope. This means that the child functions are lexically bound to the execution context of their parents
 
 > **The body of a function is evaluated in the environment where the function is defined, not the environment where the function is called**
 
-```
+```sml
 val x = 1
 (* x maps to 1 *)
 
@@ -268,3 +268,197 @@ A Function value has two parts
 - The environment that was current when the function was defined
 
 This "pair" is called a **Function Closure** or just closure & this closure carries with it an environment that provides all the necessary bindings so it is "closed" - it has everything it needs to produce a function result given a function argument. A function call just evaluates the code part in the environment part.
+
+Lexical scope and closures get more interesting when we have higher-order functions
+
+```sml
+val x = 1
+fun f y =
+    let
+        val x = y+1
+    in
+        fn z => x + y + z (* take z and return 2y+1 *)
+    end
+
+val x = 3 (* irrelevant *)
+val g = f 4 (* fn z => 4 + 5 + z Returns a fun that adds 9 to its arg *)
+
+val y = 5 (* irrelevant *)
+val z = g 6 (* get 15 *)
+```
+
+Here, f is bound to a closure where the environment part maps x to 1. So when we later evaluate f 4, we
+evaluate let val x = y + 1 in fn z => x + y + z end in an environment where x maps to 1 extended
+to map y to 4. But then due to the let-binding we shadow x so we evaluate fn z => x + y + z in an
+environment where x maps to 5 and y maps to 4. How do we evaluate a function like fn z => x + y + z?
+We create a closure with the current environment. So f 4 returns a closure that, when called, will always
+add 9 to its argument, no matter what the environment is at any call-site. Hence, in the last line of the
+example, z will be bound to 15.
+
+```sml
+fun f g =
+    let
+        val x = 3 (* irrelevant since its not used in expression below *)
+    in
+        g 2
+    end
+
+val x = 4
+fun h y = x + y (* Add 4 to its argument *)
+val z = f h (* get 6 since f always return 2 to h which adds 4 to the argument *)
+```
+
+In this example, f is bound to a closure that takes another function g as an argument and returns the result
+of g 2. The closure bound to h always adds 4 to its argument because the argument is y, the body is x+y,
+and the function is defined in an environment where x maps to 4. So in the last line, z will be bound to
+6. The binding val x = 3 is totally irrelevant: the call g 2 is evaluated by looking up g to get the closure
+that was passed in and then using that closure with its environment (in which x maps to 4) with 2 for an
+argument
+
+
+### Why Lexical Scope
+
+But first we can also motivate lexical scope by showing how dynamic scope (where you just have one current
+environment and use it to evaluate function bodies) leads to some fundamental problems.
+
+- Function meaning does not depend on variable name used
+
+Here we can change the body of f to use q everywhere instead of x when in lexical scope but in dynamic scope 
+it depends on how the result is being used 
+
+```sml
+fun f g = let val x = 9 in g() end
+(* In Lexical scope since x is not use this would just return g() *)
+
+val x = 7
+fun h() = x+1
+val y = f h
+
+(* In Lexical scope 7 is Picked up so y = 8 *)
+(* In Dynamic scope 7 is replaced by 9 in local scope up so y = 10 *)
+
+```
+
+- We can remove unused variables
+
+```sml
+fun f g = let val x = 9 in g() end
+(* we can remove x=9 *)
+fun f g = g()
+```
+
+- Funs can be type checked and reasoned about where defined
+
+```sml
+val x = 1
+fun f y = let val x=y+1 in fn z => x+y+z end
+
+val x = "hi"
+val g = f 7
+val z = g 4
+(* Here dynamic scoping adds a string and an unbound variable to x *)
+```
+
+- **Closures can store data they need**
+
+```sml
+fun greaterThanX x = fn y => y > x
+(* 
+    Filter all non negative numbers
+    Here ~1 is passed to the filter function
+    and even tho it might have x defined lexical 
+    scope makes sure that does not affect the results
+*)
+fun noNegatives xs = filter (greaterThanX ~1, xs)
+(* Filter all non negative numbers *)
+fun allGreater (xs, n) = filter(fn x => x > n, xs)
+```
+
+Tho Lexical scope is the right default and common across languages, Dynamic scope is occasionally useful
+so languages like Racket have special ways to do it but most don't bother
+
+**Exception handling is more like dynamic scope**
+
+When an exception is raised, evaluation has to "look up" which handle expression should be evaluated. This "look up" is done using the **dynamic call stack** with no regard for the lexical structure of the program
+
+
+### Closures & Recomputation
+
+We can avoid unnecessary recomputation of things when we're using Closures
+
+```sml
+fun allShorterThan1(xs, s) = 
+    filter (fn x => String.size x < String.size s, xs)
+
+(* recomputes String.size s once per element in xs *)
+
+fun allShorterThan2(xs, s) =
+    let
+        val i = String Size s
+    in
+        filter(fn x => String.size x < i, xs)
+    end
+
+(* Pre-computes String.size s and binds it to a variable i *)
+```
+
+Another side-note, we can print in SML by using `print` and `;` to tie it to expressions as when
+running `e1;e2` e1 is executed and result and thrown away while e2 is returned
+
+```sml
+print "hello"; 1+2;
+```
+
+### Fold and More Closure Examples
+
+Beyond map and filter a third incredibly useful higher-order function is fold, which can have several slightly different definitions and is also known by names such as "reduce" and "inject".
+
+```sml
+fun fold (f,acc,xs) =
+    case xs of
+        [] => acc
+      | x::xs' => fold (f, f(acc,x), xs')
+
+(* val fold = fn : ('a * 'b -> 'a) * 'a * 'b list -> 'a *)
+```
+
+This version "Folds left"; another version "Folds right", Whether the direction matters or not depends on `f`
+
+fold takes an "initial answer" `acc` and uses `f` to "combine" acc and the first element of the list, using this
+as the new "initial answer" for "folding" over the rest of the list. We can use fold to take care of iterating
+over a list while we provide some function that expresses how to combine elements. For example, to sum the
+elements in a list foo, we can do
+
+```sml
+fold ((fn (x,y) => x+y), 0, foo)
+```
+
+As with map and filter, much of fold's power comes from clients passing closures that can have **private fields (in the form of variable bindings)** for keeping data they want to consult.
+
+```sml
+(* Counts how many elements are in some integer range *)
+
+fun numberInRange (xs,lo,hi) =
+    fold ((fn (x,y) =>
+        x + (if y >= lo andalso y <= hi then 1 else 0)),
+    0, xs)
+```
+
+This pattern of splitting the recursive traversal (fold / map) from the data-processing done on the elements is fundamental here, This splits the concerns and allows us to 
+
+- Reuse the same traversal for different data processing
+- Reuse the same data processing for different data structures
+
+
+```sml
+(* checks if all elements are strings shorter than some other string’s length *)
+
+fun areAllShorter (xs,s) =
+    let
+        val i = String.size s
+    in
+        fold((fn (x,y) => x andalso String.size y < i), true, xs)
+    end
+```
+
+Functions can use private data in its environment and the iterator need not care much about the data or the types
