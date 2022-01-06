@@ -462,3 +462,185 @@ fun areAllShorter (xs,s) =
 ```
 
 Functions can use private data in its environment and the iterator need not care much about the data or the types
+
+### Function Composition (Combining Funcs)
+
+When we program with lots of functions, it is useful to create new functions that are just combinations of
+other functions. You have probably done similar things in mathematics, such as when you compose two
+functions. For example, here is a function that does exactly function composition:
+
+```math
+fun compose (f,g) = fn x => f (g x)
+```
+
+It takes two functions `f` and `g` and returns a function that applies its argument to `g` and makes that the
+argument to `f` so the type of compose is inferred to be `('a -> 'b) * ('c -> 'a) -> 'c -> 'b`
+
+As convenient library function, the ML library defines the **infix operator** `o` as **function composition**,
+just like in math. So instead of writing:
+
+```sml
+fun sqrt_of_abs i = Math.sqrt(Real.fromInt (abs i))
+```
+
+you could write
+
+```sml
+fun sqrt_of_abs i = (Math.sqrt o Real.fromInt o abs) i
+```
+
+we can also bind to a variable with a val-binding
+
+```sml
+val sqrt_of_abs = Math.sqrt o Real.fromInt o abs
+```
+
+While all three versions are fairly readable, the first one does not immediately indicate to the reader that
+sqrt_of_abs is just the composition of other function
+
+As in math function composition is **Right to Left** which mean we take abs value -> convert to real -> take square root but normally devs are used to reading **left to right** for which we have **Pipelines**
+
+```sml
+infix |> 
+(* tells the parser |> is a function that appears between its two arguments *)
+fun x |> f = f x
+(* takes an arg x and a function f to run f x *)
+
+fun sqrt_of_abs i = i |> abs |> Real.fromInt |> Math.sqrt
+```
+
+This operator, commonly called the pipeline operator, is very popular in F# programming. (F# is a dialect
+of ML that runs on .Net and interacts well with libraries written in other .Net languages.)
+
+
+## Currying
+
+We have already seen that in ML every function takes exactly one argument so previously
+we passed a tuple as the one argument so that each part of the tuple is conceptually one of the multiple arguments.
+
+Another more clever and often more convenient way is to **have a function take the first conceptual argument and return another function that takes the second conceptual argument** and so on. Lexical scope is essential
+to this technique working correctly
+
+This technique is called currying after a logician named Haskell Curry
+
+Here is an example of a “three argument” function that uses currying:
+
+```sml
+val sorted3 = fn x => fn y => fn z => z >= y andalso y >= x
+
+(* val sorted3 = fn : int -> int -> int -> bool *)
+```
+
+So `((sorted3 4) 5) 6` computes exactly what we want and feels pretty close to calling sorted3 with 3 arguments. Even better, the parentheses are optional, so we can write exactly the same thing as `sorted3 4 5 6`
+which is actually fewer characters than our old tuple approach where we would have done
+
+```sml
+fun sorted3_tupled (x,y,z) = z >= y andalso y >= x
+val someClient = sorted3_tupled(4,5,6)
+```
+
+In general, the syntax e1 e2 e3 e4 is implicitly the nested function calls (((e1 e2) e3) e4) and this
+choice was made because it makes using a curried function so pleasant.
+
+```sml
+fun f a b c = a+b+c
+(* val f = fn : int -> int -> int -> int *)
+
+f 1 2 3; (* 6 *)
+```
+
+
+### Partial Application
+
+Like Currying but we pass in too few arguments cause iss more cleaner sometimes
+
+As a silly example, `sorted3 0 0`
+returns a function that returns true if its argument is nonnegative.
+
+```sml
+val non_neg = sorted3 0 0;
+
+non_neg 10;
+(* val it = true : bool *)
+non_neg ~10;
+(* val it = false : bool *)
+```
+
+let us start by taking in a simple `sum` function
+
+```sml
+fun sum xs = fold (fn(x,y)=>x+y) 0 xs
+```
+
+We can make this better
+
+```sml
+val sum = fold (fn(x,y)=>x+y) 0
+```
+
+This is similar to how instead of writing `f x = g x` we write `val f = g`
+
+
+Let us look at another example of `Range` that returns a list of numbers in a range
+
+```sml
+fun range i j= if i > j then [] else i::range (i+1) j
+- range 3 5; (* val it = [3,4,5] *)
+
+(*using this we can write a countup function *)
+val countup_from_one = range 1
+- countup_from_one 4 (* val it = [1,2,3,4] *)
+
+fun countup_bad_example x = range 1 x
+(* This works but is bad style, we should rather use partial applications *)
+```
+
+We can also use the in-built Map and Filter to define partial applications
+
+```sml
+(* Add 1 to every element of a list *)
+val incrementAll = List.map (fn x => x+1) 
+
+(* Remove the non zero elements in a list *)
+val removeZeros = List.filter (fn x => x<>0)
+```
+
+Using partial functions to create a Polymorphic function may not work due to **Value Restriction**
+we might get an warning `type vars not generalized`
+
+```sml
+val pairwithOne = List.map (fn x => (x,1))
+
+stdIn:1.6-1.44 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+val pairwithOne = fn : ?.X1 list -> (?.X1 * int) list
+
+
+(* Workarounds *)
+
+(* Fallback to functions *)
+fun pairwithOne xs = List.map (fn x => (x,1)) xs (* val pairwithOne = fn : 'a list -> ('a * int) list *)
+(* Explicit Typing *)
+val pairwithOne: string list -> (string* int) list = List.map (fn x => (x,1))
+```
+
+This only happens when the resulting function from a partial application is Polymorphic
+
+### Mutable References
+
+Mutation is okay in sometime and A key approach in functional programming is to use it only when **"updating the state of something so all users of that state can see a change has occurred"** is the natural way to model your computation. Moreover, we want to keep features for mutation separate so that we know when mutation is not being used.
+
+In SMl the mutation construct is called **References**
+
+```
+val x = ref 42 (* int ref *)
+val y = ref 42
+val z = x
+(* both z and x now point to the same block like a reference/pointer *)
+
+val _ = x := 43
+
+!y + !z (* 43+42 = 85 *)
+```
+
+we cannot perform arithmetic operations on `ref` ie `x+1` type, we can just do a reference/assign with `:=` or a dereference/read with `!`
