@@ -387,7 +387,7 @@ When an exception is raised, evaluation has to "look up" which handle expression
 We can avoid unnecessary recomputation of things when we're using Closures
 
 ```sml
-fun allShorterThan1(xs, s) = 
+fun allShorterThan1(xs, s) =
     filter (fn x => String.size x < String.size s, xs)
 
 (* recomputes String.size s once per element in xs *)
@@ -527,8 +527,10 @@ Here is an example of a “three argument” function that uses currying:
 
 ```sml
 val sorted3 = fn x => fn y => fn z => z >= y andalso y >= x
-
 (* val sorted3 = fn : int -> int -> int -> bool *)
+
+fun sorted3_curried x y z = z >= y andalso y >= x; (* Same Type *)
+(* val sorted3_curried = fn : int -> int -> int -> bool *)
 ```
 
 So `((sorted3 4) 5) 6` computes exactly what we want and feels pretty close to calling sorted3 with 3 arguments. Even better, the parentheses are optional, so we can write exactly the same thing as `sorted3 4 5 6`
@@ -644,3 +646,64 @@ val _ = x := 43
 ```
 
 we cannot perform arithmetic operations on `ref` ie `x+1` type, we can just do a reference/assign with `:=` or a dereference/read with `!`
+
+### Closure Idiom: Callbacks
+
+A callback is a library that detects when "events" occur and informs clients that have previously "registered" their interest in hearing about events. Clients can register their interest by providing a "callback" a function that gets called when the event occurs.
+
+Our example uses the idea that callbacks should be called when a key on the keyboard is pressed. We will
+pass the callbacks an int that encodes which key it was. Our interface just needs a way to register callbacks.
+
+```sml
+val onKeyEvent : (int -> unit) -> unit
+```
+
+Clients will pass a function of type `int -> unit` when called later with an `int` will do whatever they
+want. To implement this function we just use a reference that holds a list of the callbacks. Then when an
+event actually occurs, we assume the function `onEvent` is called and it calls each callback in the list
+
+```sml
+val cbs : (int -> unit) list ref = ref []
+fun onKeyEvent f = cbs := f::(!cbs) (* The only "public" binding *)
+
+fun onEvent i =
+    let fun loop fs =
+        case fs of
+            [] => ()
+         | f::fs’ => (f i; loop fs’)
+    in loop (!cbs) end
+```
+
+Most importantly, the type of onKeyEvent places no restriction on what extra data a callback can access
+when it is called. Here are different clients (calls to onKeyEvent) that use different bindings of different types
+in their environment
+
+```sml
+val timesPressed = ref 0
+val _ = onKeyEvent (fn _ => timesPressed := (!timesPressed) + 1)
+
+fun printIfPressed i =
+    onKeyEvent (fn j => if i=j
+                        then print ("you pressed " ^ Int.toString i ^ "\n")
+                        else ())
+
+val _ = printIfPressed 4
+val _ = printIfPressed 11
+val _ = printIfPressed 23
+
+- onEvent 11; (* val it = (): unit *)
+- !timesPressed (* 1: int *)
+```
+
+
+### Standard Library
+
+Every language has a stdlib for operations users can implement i.e opening a file & for
+operations that are more common when using the Data Structures in the language i.e list List.Map
+
+https://smlfamily.github.io/Basis/manpages.html
+
+We have structures like STRING, Char, List & ListPair. Standard bindings are listed as StructureName.functionName i.e List.map, String.isSubstring
+
+
+### Abstract Data Types (Another Closure Idiom)
