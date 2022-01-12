@@ -707,3 +707,181 @@ We have structures like STRING, Char, List & ListPair. Standard bindings are lis
 
 
 ### Abstract Data Types (Another Closure Idiom)
+
+The key to an abstract data type (ADT) is requiring clients to use it via a collection of functions rather
+than directly accessing its private implementation. Thanks to this abstraction, we can later change how the
+data type is implemented without changing how it behaves for clients.
+
+In an object-oriented language we might implement an ADT by defining a class with all private fields (inaccessible to clients) and some public methods (the interface with clients). We can do the same thing in ML with a record of closures; the variables that the closures use from the environment correspond to the private fields.
+
+As an example, consider an implementation of a set of integers that supports creating a new bigger set and
+seeing if an integer is in a set. Our sets are mutation-free in the sense that adding an integer to a set produces
+a new, different set. (We could just as easily define a mutable version using ML’s references.) In ML, we
+could define a type that describes our interface:
+
+```sml
+datatype set = S of { 
+                insert : int -> set,
+                member : int -> bool,
+                size : unit -> int 
+            }
+```
+
+Let us start with an `empty_set` & before implementing this interface, let’s see how a client might use it
+
+```sml
+fun use_sets () =
+    let val S s1 = empty_set
+        val S s2 = (#insert s1) 34 (* In other langs: s1.insert(34) *)
+        val S s3 = (#insert s2) 34
+        val S s4 = #insert s3 19
+    in
+        if (#member s4) 42
+        then 99
+        else if (#member s4) 19
+        then 17 + (#size s3) ()
+        else 0
+    end
+```
+
+
+There are many ways we could define `empty_set`; they will all use the technique of using a closure to
+"remember" what elements a set has. Here is one way:
+
+```sml
+val empty_set =
+    let
+        fun make_set xs = (* xs is a "private field" in result *)
+        let (* contains a "private method" in result *)
+            fun contains i = List.exists (fn j => i=j) xs
+        in
+            S {
+                insert = fn i => if contains i
+                                 then make_set xs
+                                 else make_set (i::xs),
+                member = contains,
+                size = fn () => length xs
+            }
+        end
+    in
+        make_set []
+    end
+```
+
+All the fanciness is in `make_set`, and `empty_set` is just the record returned by make_set []. What make_set
+returns is a value of type set. It is essentially a record with three closures. The closures can use xs, the
+helper function `contains`, and `make_set`. Like all function bodies, they are not executed until they are
+called.
+
+### Closure in Other Languages
+
+To conclude our study of function closures, we digress from ML to show similar programming patterns in
+Java (using generics and interfaces) and C (using function pointers taking explicit environment arguments).
+
+For both Java and C, we will "port" this ML code which defines our own polymorphic linked-list type
+constructor and three polymorphic functions (two higher-order) over that type. We will investigate a couple
+ways we could write similar code in Java or C, which will can help us better understand similarities between
+closures and objects (for Java) and how environments can be made explicit (for C).
+
+```sml
+datatype ’a mylist = Cons of ’a * (’a mylist) | Empty
+
+fun map f xs =
+    case xs of
+        Empty => Empty
+        | Cons(x,xs) => Cons(f x, map f xs)
+
+fun filter f xs =
+    case xs of
+        Empty => Empty
+        | Cons(x,xs) => if f x 
+                        then Cons(x,filter f xs)
+                        else filter f xs
+
+fun length xs =
+    case xs of
+        Empty => 0
+        | Cons(_,xs) => 1 + length xs
+```
+
+Using this library, here are two client functions. (The latter is not particularly efficient, but shows a simple
+use of length and filter.)
+
+```sml
+(* Double all numbers in a list *)
+val doubleAll = map (fn x => x * 2)
+
+(* Count Ns in a list *)
+fun countNs (xs, n : int) = length (filter (fn x => x=n) xs)
+```
+
+
+### In Java
+
+Java8 has closure constructs like map & filter but lets ignore that for now, In java while we do not have first-class functions, currying, or type inference, we do have **generics** (Java did not used to) and we can define interfaces with one method, which we can use like function types.
+
+```java
+interface Func<B,A> {
+    B m(A x);
+}
+
+interface Pred<A> {
+    boolean m(A x);
+}
+```
+
+We are gonna have `null` as our empty list and implement Map and Filter as Static Methods, The Map method
+takes in type A and B and returns B, it taken in a Function that acts on A and returns B and applies it over a List of type A, Similarly filter is the same recursive operation like how it is in ML, length is a while loop with Mutability 😱
+
+```java
+class List<T> {
+    T head;
+    List<T> tail;
+    List(T x, List<T> xs) {
+        head = x;
+        tail = xs;
+    }
+    static <A,B> List<B> map(Func<B,A> f, List<A> xs) {
+        if(xs==null)
+            return null;
+        return new List<B>(f.m(xs.head), map(f,xs.tail));
+    }
+    static <A> List<A> filter(Pred<A> f, List<A> xs) {
+        if(xs==null)
+            return null;
+        if(f.m(xs.head))
+            return new List<A>(xs.head, filter(f,xs.tail));
+        return filter(f,xs.tail);
+    }
+    static <A> int length(List<A> xs) {
+        int ans = 0;
+        while(xs != null) {
+            ++ans;
+            xs = xs.tail;
+        }
+        return ans;
+    }
+}
+```
+
+Here is how clients might use this
+
+```java
+class ExampleClients {
+    static List<Integer> doubleAll(List<Integer> xs) {
+        return List.map((new Func<Integer,Integer>() {
+            public Integer m(Integer x) { return x * 2; }
+            }),
+            xs);
+    }
+
+    static int countNs(List<Integer> xs, final int n) {
+        return List.length(List.filter((new Pred<Integer>() {
+            public boolean m(Integer x) { return x==n; }
+            }),
+            xs));
+        }
+}
+```
+
+This works but we need to add extra cases in all clients for `null` as we cannot call a method on `null`, The old `NullPointerException` comes up, An more OO approach would be to use a subclass of List for empty lists rather than null

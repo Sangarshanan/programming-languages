@@ -237,39 +237,3 @@ handle-expression. Hints: Sample solution is 3 lines.
 fun first_match v ps =
     SOME(first_answer (fn p => match(v, p)) ps) 
 	handle NoAnswer => NONE
-
-(**** 
-challenge problem
-
-Write a function typecheck_patterns that “type-checks” a pattern list. Types
-for our made-up pattern language are defined by
-****)
-
-datatype typ = Anything
-			|  UnitT
-			|  IntT
-			|  TupleT of typ list
-			|  Datatype of string
-
-(*
-typecheck_patterns should have type 
-((string * string * typ) list) * (pattern list) -> typ option.
-
-The first argument contains elements that look like ("foo","bar",IntT),
-which means constructor foo makes a value of type Datatype "bar" given a value of type IntT. 
-
-Assume list elements all have different first fields (the constructor name),
-but there are probably elements with the same second field (the datatype name).
-
-Under the assumptions this list provides, you “type-check” the pattern list to see if there exists
-some typ (call it t) that all the patterns in the list can have. If so, return SOME t, else return NONE.
-You must return the “most lenient” type that all the patterns can have.3
-
-For example, given patterns
-TupleP[Variable("x"),Variable("y")] and TupleP[Wildcard,Wildcard], return TupleT[Anything,Anything]
-even though they could both have type TupleT[IntT,IntT]. 
-
-As another example, if the only patterns
-are TupleP[Wildcard,Wildcard] and TupleP[Wildcard,TupleP[Wildcard,Wildcard]], you must return
-TupleT[Anything,TupleT[Anything,Anything]].
-*)
