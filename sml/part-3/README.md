@@ -601,7 +601,7 @@ We can also use the in-built Map and Filter to define partial applications
 
 ```sml
 (* Add 1 to every element of a list *)
-val incrementAll = List.map (fn x => x+1) 
+val incrementAll = List.map (fn x => x+1)
 
 (* Remove the non zero elements in a list *)
 val removeZeros = List.filter (fn x => x<>0)
