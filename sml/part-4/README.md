@@ -140,3 +140,90 @@ fun pairWithone xs = List.map (fn x => (x,1)) xs
 ```
 
 Despite value restrictions ML types inference is quite elegant and fairly easy to understand, We have a beautiful statically typed language where we don't need to specify the types at all.
+
+### Mutual Recursion
+
+Two functions are called mutually recursive if the first function makes a recursive call to the second function and the second function, in turn, calls the first one. Allow f to call g and g to call f.
+
+It is a useful idiom to implement state machines
+
+```sml
+(* and Keyword *)
+
+fun f1 p1 = e1
+and f2 p2 = e2
+and f3 p3 = e3
+```
+
+We can have similar mutually recursive datatype bindings
+
+```sml
+datatype t1 = ...
+and t2 = ...
+and t3 = ...
+```
+
+**State machine** Each "state of a computation" is a function and "state transition" is "call another function" with "rest of input" and this generalizes to any finite state machine example
+
+```sml
+(*
+    Deciding if a list of ints alternate 
+    between 1 and 2 & not ending with 1
+*)
+fun match xs = (* [1,2,1,2] *)
+    let fun s_need_one xs =
+        case xs of
+        [] => true
+        | 1::xs’ => s_need_two xs’
+        | _ => false
+    and s_need_two xs =
+        case xs of
+        [] => false
+        | 2::xs’ => s_need_one xs’
+        | _ => false
+    in
+        s_need_one xs
+    end
+```
+
+Here is a second example that also uses two mutually recursive datatype bindings. The definition of
+types t1 and t2 refer to each other which is allowed by using and in place of datatype for the second one.
+This defines two new datatypes t1 and t2.
+
+```sml
+datatype t1 = Foo of int | Bar of t2
+and t2 = Baz of string | Quux of t1
+
+fun no_zeros_or_empty_strings_t1 x =
+    case x of
+    Foo i => i <> 0
+    | Bar y => no_zeros_or_empty_strings_t2 y
+and no_zeros_or_empty_strings_t2 x =
+    case x of
+    Baz s => size s > 0
+    | Quux y => no_zeros_or_empty_strings_t1 y
+```
+
+Now suppose we wanted to implement the “no zeros or empty strings” functionality of the code above but
+for some reason we did not want to place the functions next to each other or we were in a language with no
+support for mutually recursive functions.
+
+**We can write almost the same code by having the “later” function pass itself to a version of the “earlier” function that takes a function as an argument**
+
+```sml
+fun no_zeros_or_empty_strings_t1(f,x) =
+    case x of
+    Foo i => i <> 0
+    | Bar y => f y
+
+(* Because all function calls are tail calls,
+the code runs in a small amount of space,
+just as one would expect for an implementation
+of a finite state machine *)
+
+fun no_zeros_or_empty_string_t2 x =
+    case x of
+    Baz s => size s > 0
+    | Quux y => no_zeros_or_empty_strings_t1(no_zeros_or_empty_string_t2,y)
+```
+This is yet-another powerful idiom allowed by functions taking functions.
