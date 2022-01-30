@@ -227,3 +227,71 @@ fun no_zeros_or_empty_string_t2 x =
     | Quux y => no_zeros_or_empty_strings_t1(no_zeros_or_empty_string_t2,y)
 ```
 This is yet-another powerful idiom allowed by functions taking functions.
+
+
+### Module system
+
+When we have a large program using just one top level sequence of bindings is poor style especially cause a binding can use all earlier (non shadowed) bindings, so ML let's you define modules.
+For eg: `List.map` has `map` as a function in the `List` module.
+
+```sml
+structure MyMathLib =
+struct
+
+fun fact x =
+    if x=0
+    then 1
+    else x * fact (x - 1)
+
+val half_pi = Math.pi / 2.0
+
+fun doubler y = y + y
+end
+
+val pi = MyMathLib.half_pi + MyMathLib.half_pi
+val twenty_eight = MyMathLib.doubler 14
+```
+
+### Signatures and Hiding things
+
+A signature is a type for a module, what bindings it has & what are its types. They let us
+provide strict interfaces that code outside the module must obey
+
+```sml
+signature MATHLIB =
+sig
+val fact : int -> int
+val half_pi : real
+val doubler : int -> int
+end
+
+structure MyMathLib :> MATHLIB =
+struct
+fun fact x =
+    if x=0
+    then 1
+    else x * fact (x - 1)
+
+val half_pi = Math.pi / 2.0
+
+fun doubler y = y + y
+end
+```
+
+Because of the `:> MATHLIB` the structure MyMathLib will type-check only if it actually provides everything the
+signature MATHLIB claims it does and with the right types. Signatures can also contain datatype, exception, and type bindings.
+
+Signatures help a lot in hiding implementations and ofc separating the interface from the implementation is probably the most important strategy for building correct, robust & reusable programs
+
+If a function is not part of a signature then it cannot be called outside the Module i.e it becomes unbounded, This is kinda synonymous to having private functions
+
+```sml
+signature MATHLIB =
+sig
+val fact : int -> int
+val half_pi : real
+end
+```
+
+For this signature, the client code cannot call `MyMathLib.doubler`. The binding simply is not in scope, so no use of it will type-check. In general, the idea is that we can implement the module however we like and only bindings
+that are explicitly listed in the signature can be called directly by clients.
