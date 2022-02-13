@@ -172,9 +172,9 @@ Writing other common list functions
 Racket has an amazingly simple syntax and Everything in the language is either
 
 - Some form of atom such as #t, #f, 34, "hi", null, etc. A particularly important form of atom is an
-identifier, which can either be a variable (e.g: x or something-like-this!) or a special form such as
-define, lambda, if, and so on.
-- A sequence of things in parentheses (t1 t2 ... tn).
+identifier, which can either be a variable (e.g: x or something-like-this!)
+- A special form such as define, lambda, if, and so on. Macros will let us define our own special forms
+- A sequence of things in parentheses (t1 t2 ... tn), if t1 is a special form then the semantics of sequence is special else its just a function call
 
 The first thing in a sequence affects what the rest of the sequence means. For example, (define ...) means
 we have a definition and the next thing can be a variable to be defined or a sequence for the sugared version
@@ -184,7 +184,18 @@ If the first thing in a sequence is not a special form and the sequence is part 
 a function call. Many things in Racket are just functions, such as `+` and `>`.
 
 By "parenthesizing everything" Racket has a syntax that is **unambiguous**. There are never any rules to learn
-about whether `1+2*3 is 1+(2*3)` or `(1+2)*3` and whether `f x y` is `(f x) y` or `f (x y)`. It makes parsing,
-converting the program text into a tree representing the program structure, trivial. Notice that XML-based
-languages like HTML take the same approach. In HTML, an "open parenthesis" looks like `<foo>` and the
+about whether `1+2*3 is 1+(2*3)` or `(1+2)*3` and whether `f x y` is `(f x) y` or `f (x y)`. 
+
+It makes parsing, converting the program text into a tree representing the program structure, trivial. Notice that XML-based languages like HTML take the same approach. In HTML, an "open parenthesis" looks like `<foo>` and the
 matching close-parenthesis looks like `</foo>`.
+
+- Atoms are leaves
+- Sequences are nodes with elements as children
+
+```
+(define cube
+    (lambda (x)
+        (* x x x )))
+```
+
+![alt ast](https://github.com/sangarshanan/programming-languages/blob/master/2-racket/part-1/static/ast.png "AST")
