@@ -122,8 +122,9 @@ than ML programs
 | Get tail of a list                            | cdr          | (cdr some-list)        |
 | Return #t for the empty-list and #f otherwise |   null?      | (null? some-value)     |
 
-There is also a built-in function list for building a list from any number of elements, so you can write
-`(list 2 3 4)` instead of `(cons 2 (cons 3 (cons 4 null)))`. **Lists also need not hold elements of the same type** so you can create `(list #t "hi" 14)` without error.
+There is also a built-in function list for building a list from any number of elements
+so you can write `(list 2 3 4)` instead of `(cons 2 (cons 3 (cons 4 null)))`
+**Lists also need not hold elements of the same type** so you can create `(list #t "hi" 14)` without error.
 
 ```racket
 # Sum of numbers in a list
@@ -192,7 +193,7 @@ matching close-parenthesis looks like `</foo>`.
 - Atoms are leaves
 - Sequences are nodes with elements as children
 
-```
+```racket
 (define cube
     (lambda (x)
         (* x x x )))
