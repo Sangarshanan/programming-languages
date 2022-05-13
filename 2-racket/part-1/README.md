@@ -2,7 +2,7 @@
 
 Part 1 Notes: https://courses.cs.washington.edu/courses/cse341/16sp/unit5notes.pdf
 
-Homework: https://courses.cs.washington.edu/courses/cse341/19sp/hw1.pdf
+Homework: https://courses.cs.washington.edu/courses/cse341/19sp/hw5.pdf
 
 Racket and ML share many similarities: They are both mostly functional languages (i.e., mutation exists but is discouraged) with closures, anonymous functions, convenient support for lists, no return statements, etc. Seeing these features in a second language should help re-enforce the underlying ideas. One moderate difference is that we will not use pattern matching in Racket.
 
@@ -312,5 +312,6 @@ for the purpose of the test. It is sometimes bad style to exploit this feature b
 ; 3
 ```
 
+### Local Bindings
 
-
+For obvious reasons, we need to be able to define local variables inside functions. Like ML we use `let` expressions but here unlike ML instead of one construct for local bindings there are four. This variety will also help us learn about scope and environments i.e variables are looked up in an environment
